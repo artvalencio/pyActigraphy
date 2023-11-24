@@ -109,7 +109,7 @@ setup(
         'joblib', 'lmfit', 'pandas', 'plotly', 'numba', 'numpy', 'pyexcel',
         'pyexcel-ods3', 'pyexcel-xlsx', 'scipy', 'spm1d', 'statsmodels>=0.10',
         'stochastic>=0.6.0', 
-        '<accelerometer> @ https://github.com/artvalencio/biobankAccelerometerAnalysis/archive/master.zip'
+        '<accelerometer> @ https://github.com/artvalencio/biobankAccelerometerAnalysis/archive/refs/heads/master.zip'
     ],  # Optional
 
     # Data files included in your packages that need to be installed.
