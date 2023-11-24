@@ -45,11 +45,13 @@ class RawATR(BaseRaw):
         header = {}
         with open(input_fname) as fp:
             first_line = fp.readline()
-            #if not re.match(r"\+-*\+ \w+ \w+ \w+ \+-*\+", first_line):
-            #    raise ValueError(
-            #        "The input file ({}) does not ".format(input_fname)
-            #        + "seem to contain the usual header.\n Aborting."
-            #    )
+            if re.match(r"\#\w*=\d.\d.\d",first_line):
+                first_line = fp.readline()
+            if not re.match(r"\+-*\+ \w+ \w+ \w+ \+-*\+", first_line):
+                raise ValueError(
+                    "The input file ({}) does not ".format(input_fname)
+                    + "seem to contain the usual header.\n Aborting."
+                )
             for line in fp:
                 if '+-------------------' in line:
                     break
