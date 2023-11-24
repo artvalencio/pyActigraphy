@@ -24,6 +24,7 @@
 # GNU General Public License for more details.
 ############################################################################
 import pandas as pd
+import numpy as np
 import re
 from scipy import signal
 from ..metrics.metrics import _lmx
@@ -937,6 +938,73 @@ class LightMetricsMixin(object):
 
         return data_smooth
 
+    def LRI(self, threshold, get_profile=False):
+        r"""Light Regularity Index 
+
+        Calculates the Light Regularity Index (LRI)
+
+        Parameters
+        ----------
+        threshold: int.
+            The threshold of light to be considered.
+
+        get_profile: bool, optional.
+            Argument to inform whether the user desires to obtain
+            the LRI daily profile for future plotting.
+            Default: False.
+
+        Returns
+        -------
+        lri_coef: float
+            The value of LRI.
+
+        get_profile: pd.Series, only if get_profile=True
+            The daily profile of LRI.
+
+        References
+        ----------
+
+        [1] Hand, A.J. et al, Measuring light regularity: sleep regularity is
+            associated with regularity of light exposure in adolescents,
+            Sleep, 46(8), zsad001, https://doi.org/10.1093/sleep/zsad001
+
+        """
+        def prob_stability(ts):
+            r''' Compute the probability that any two consecutive time
+            points are in the same state (wake or sleep)'''
+            # Compute stability as $\delta(s_i,s_{i+1}) = 1$ if $s_i = s_{i+}$
+            # Two consecutive values are equal if the 1st order diff is equal to zero.
+            # The 1st order diff is either +1 or -1 otherwise.
+            prob = np.mean(1-np.abs(np.diff(ts)))
+            return prob
+
+        def lri_profile(data, threshold):
+            r''' Compute daily profile of light regularity indices '''
+            # Group data by hour/minute/second across all the days contained in the
+            # recording
+            data_grp = data.groupby([data.index.hour,data.index.minute,data.index.second])
+            # Apply prob_stability to each data group (i.e series of consecutive points
+            # that are 24h apart for a given time of day)
+            lri_prof = data_grp.apply(prob_stability)
+            lri_prof.index = pd.timedelta_range(start='0 day',end='1 day',freq=data.index.freq,closed='left')
+            return lri_prof
+
+        # Work on a data copy for safety and
+        # map to 0 and 1 according to threshold 
+        light_data = self.data.LIGHT.copy()
+        light_data = light_data.map(lambda x: 1.0 if x > threshold else 0.0)
+        
+        # Compute daily profile of light regularity indices
+        lri_prof = lri_profile(light_data, threshold)
+        # Calculate LRI coefficient using SRI formula
+        lri_coef = 200*np.mean(lri_prof.values)-100
+
+        # Return results
+        if get_profile:
+            return lri_coef,lri_prof
+        else:
+            return lri_coef
+    
     def filter_butterworth(self, fc_low, fc_high, N, channels=None):
         r"""Butterworth filtering
 
