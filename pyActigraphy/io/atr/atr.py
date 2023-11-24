@@ -71,7 +71,7 @@ class RawATR(BaseRaw):
 
         index_data = pd.read_csv(
             input_fname,
-            skiprows=len(header)+2,
+            skiprows=len(header)+3, #changed from 2 to 3
             sep=';',
             parse_dates=True,
             infer_datetime_format=True,
