@@ -65,18 +65,80 @@ class RawATR(BaseRaw):
         # extract informations from the header
         uuid = header['DEVICE_ID'][0]
         name = header['SUBJECT_NAME'][0]
-        freq = pd.Timedelta(int(header['INTERVAL'][0]), unit='s')
+        try:
+            if int(header['INTERVAL'][0])>0:
+                freq = pd.Timedelta(int(header['INTERVAL'][0]), unit='s')
+            else:
+                freq = pd.Timedelta(60,unit='s')
+        except:
+            freq = pd.Timedelta(60,unit='s')
         self.__tat_thr = self.__extract_from_header(header, 'TAT_THRESHOLD')
 
-        index_data = pd.read_csv(
-            input_fname,
-            skiprows=len(header)+2,
-            sep=';',
-            parse_dates=True,
-            infer_datetime_format=True,
-            dayfirst=True,
-            index_col=[0]
-        ).resample(freq).sum()
+        try:
+            index_data = pd.read_csv(
+                input_fname,
+                skiprows=len(header)+2,
+                sep=';',
+                parse_dates=True,
+                infer_datetime_format=True,
+                dayfirst=True,
+                index_col=[0]
+            ).resample(freq).sum()
+        except UnicodeDecodeError as e:
+            index_data = pd.read_csv(
+                input_fname,
+                skiprows=len(header)+2,
+                sep=';',
+                parse_dates=True,
+                infer_datetime_format=True,
+                dayfirst=True,
+                index_col=[0],
+                encoding='CP1256'
+            ).resample(freq).sum()
+        except:
+            try:
+                index_data = pd.read_csv(
+                    input_fname,
+                    skiprows=len(header)+3, # mudei de 2 para 3
+                    sep=';',
+                    parse_dates=True,
+                    infer_datetime_format=True,
+                    dayfirst=True,
+                    index_col=[0]
+                    ).resample(freq).sum()
+            except UnicodeDecodeError as e:
+                index_data = pd.read_csv(
+                    input_fname,
+                    skiprows=len(header)+3, # mudei de 2 para 3
+                    sep=';',
+                    parse_dates=True,
+                    infer_datetime_format=True,
+                    dayfirst=True,
+                    index_col=[0],
+                    encoding='CP1256'
+                    ).resample(freq).sum()
+            except:
+                try:
+                    index_data = pd.read_csv(
+                        input_fname,
+                        skiprows=len(header)+4, # mudei de 2 para 4
+                        sep=';',
+                        parse_dates=True,
+                        infer_datetime_format=True,
+                        dayfirst=True,
+                        index_col=[0]
+                        ).resample(freq).sum()
+                except UnicodeDecodeError as e:
+                    index_data = pd.read_csv(
+                        input_fname,
+                        skiprows=len(header)+4, # mudei de 2 para 4
+                        sep=';',
+                        parse_dates=True,
+                        infer_datetime_format=True,
+                        dayfirst=True,
+                        index_col=[0],
+                        encoding='CP1256'
+                        ).resample(freq).sum()
 
         self.__available_modes = sorted(list(
             set(index_data.columns.values).intersection(
@@ -310,18 +372,80 @@ class RawLumus(BaseRaw):
         # extract informations from the header
         uuid = header['DEVICE_ID'][0]
         name = header['SUBJECT_NAME'][0]
-        freq = pd.Timedelta(int(header['INTERVAL'][0]), unit='s')
+        try:
+            if int(header['INTERVAL'][0])>0:
+                freq = pd.Timedelta(int(header['INTERVAL'][0]), unit='s')
+            else:
+                freq = pd.Timedelta(60,unit='s')
+        except:
+            freq = pd.Timedelta(60,unit='s')
         self.__tat_thr = self.__extract_from_header(header, 'TAT_THRESHOLD')
 
-        index_data = pd.read_csv(
-            input_fname,
-            skiprows=len(header)+3, # mudei de 2 para 3
-            sep=';',
-            parse_dates=True,
-            infer_datetime_format=True,
-            dayfirst=True,
-            index_col=[0]
-        ).resample(freq).sum()
+        try:
+            index_data = pd.read_csv(
+                input_fname,
+                skiprows=len(header)+2,
+                sep=';',
+                parse_dates=True,
+                infer_datetime_format=True,
+                dayfirst=True,
+                index_col=[0]
+            ).resample(freq).sum()
+        except UnicodeDecodeError as e:
+            index_data = pd.read_csv(
+                input_fname,
+                skiprows=len(header)+2,
+                sep=';',
+                parse_dates=True,
+                infer_datetime_format=True,
+                dayfirst=True,
+                index_col=[0],
+                encoding='CP1256'
+            ).resample(freq).sum()
+        except:
+            try:
+                index_data = pd.read_csv(
+                    input_fname,
+                    skiprows=len(header)+3, # mudei de 2 para 3
+                    sep=';',
+                    parse_dates=True,
+                    infer_datetime_format=True,
+                    dayfirst=True,
+                    index_col=[0]
+                    ).resample(freq).sum()
+            except UnicodeDecodeError as e:
+                index_data = pd.read_csv(
+                    input_fname,
+                    skiprows=len(header)+3, # mudei de 2 para 3
+                    sep=';',
+                    parse_dates=True,
+                    infer_datetime_format=True,
+                    dayfirst=True,
+                    index_col=[0],
+                    encoding='CP1256'
+                    ).resample(freq).sum()
+            except:
+                try:
+                    index_data = pd.read_csv(
+                        input_fname,
+                        skiprows=len(header)+4, # mudei de 2 para 4
+                        sep=';',
+                        parse_dates=True,
+                        infer_datetime_format=True,
+                        dayfirst=True,
+                        index_col=[0]
+                        ).resample(freq).sum()
+                except UnicodeDecodeError as e:
+                    index_data = pd.read_csv(
+                        input_fname,
+                        skiprows=len(header)+4, # mudei de 2 para 4
+                        sep=';',
+                        parse_dates=True,
+                        infer_datetime_format=True,
+                        dayfirst=True,
+                        index_col=[0],
+                        encoding='CP1256'
+                        ).resample(freq).sum()
 
         self.__available_modes = sorted(list(
             set(index_data.columns.values).intersection(
