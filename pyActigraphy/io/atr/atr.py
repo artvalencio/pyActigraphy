@@ -487,7 +487,17 @@ class RawLumus(BaseRaw):
         )
 
         # LIGHT
-        index_light = index_data.filter(like="LIGHT")
+        # Originally it would catch anything with the name LIGHT on it, i.e.
+        # index_light = index_data.filter(like="LIGHT")
+        # Now it has extra channels F1,F2,...F8, MELANOPIC EDI and CLEAR
+        # So I changed it to catch only the channels that are in the list below
+        index_light = index_data.filter(items=["LIGHT","RED LIGHT","GREEN LIGHT",
+                                               "BLUE LIGHT","IR LIGHT","UVA LIGHT","UVB LIGHT",
+                                               "F1","F2","F3","F4","F5","F6","F7","F8",
+                                               "MELANOPIC EDI","CLEAR"])
+        
+        # CONTACT
+        index_contact = index_data.filter(items=["CAP_SENS_1","CAP_SENS_2"])
 
         # call __init__ function of the base class
         super().__init__(
@@ -505,7 +515,13 @@ class RawLumus(BaseRaw):
                 uuid=uuid,
                 data=index_light,
                 frequency=index_light.index.freq
-            ) if index_light is not None else None
+            ) if index_light is not None else None,
+            contact=LightRecording(
+                name=name,
+                uuid=uuid,
+                data=index_contact,
+                frequency=index_contact.index.freq
+            ) if index_contact is not None else None
             # self.__extract_from_data(index_data, 'LIGHT')
         )
 
@@ -595,9 +611,69 @@ class RawLumus(BaseRaw):
         return self.__extract_light_channel("UVB LIGHT")
 
     @property
+    def f1_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F1")
+    
+    @property
+    def f2_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F2")
+    
+    @property
+    def f3_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F3")
+    
+    @property
+    def f4_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F4")
+    
+    @property
+    def f5_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F5")
+    
+    @property
+    def f6_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F6")
+    
+    @property
+    def f7_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F7")
+    
+    @property
+    def f8_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("F8")
+    
+    @property
+    def melanopic(self):
+        r"""Value of the melanopic."""
+        return self.__extract_light_channel("MELANOPIC EDI")
+    
+    @property
+    def clear_light(self):
+        r"""Value of the light intensity."""
+        return self.__extract_light_channel("CLEAR")
+
+    @property
     def tat_threshold(self):
         r"""Threshold used in the TAT mode."""
         return self.__tat_thr
+    
+    @property
+    def contact_1(self):
+        r"""Value of the contact sensor (capacitor sending)."""
+        return self.__extract_contact_channel("CAP_SENS_1")
+    
+    @property
+    def contact_2(self):
+        r"""Value of the contact sensor (capacitor sending)."""
+        return self.__extract_contact_channel("CAP_SENS_2")
 
     @classmethod
     def __extract_from_header(cls, header, key):
@@ -616,6 +692,12 @@ class RawLumus(BaseRaw):
             return None
         else:
             return self.light.get_channel(channel)
+        
+    def __extract_contact_channel(self, channel):
+        if self.contact is None:
+            return None
+        else:
+            return self.contact.get_channel(channel)
 
 
 def read_raw_atr(
