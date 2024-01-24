@@ -23,6 +23,7 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
         frequency,
         data,
         light,
+        contact=None,
         fpath=None
     ):
 
@@ -38,6 +39,7 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
         self.__data = data
 
         self.__light = light
+        self.__contact = contact
 
         self.__mask_inactivity = False
         self.__inactivity_length = None
@@ -141,12 +143,22 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
     def raw_light(self):
         r"""Light measurement performed by the device"""
         return self.__light
+    
+    @property
+    def raw_contact(self):
+        r"""Contact sensor measurement performed by the device"""
+        return self.__contact
 
     # TODO: @lru_cache(maxsize=6) ???
     @property
     def light(self):
         r"""Light measurement performed by the device"""
         return self.__light
+    
+    @property
+    def contact(self):
+        r"""Contact sensor measurement performed by the device"""
+        return self.__contact
 
     @property
     def mask_inactivity(self):
@@ -296,6 +308,21 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
             return light
         else:
             return light.resample(freq, origin='start').sum()
+        
+    def resampled_contact(self, freq):
+        """Contact measurement, resampled at the specified frequency.
+        """
+        contact = self.contact
+
+        if to_offset(freq).delta <= self.frequency:
+            warnings.warn(
+                'Resampling frequency equal to or lower than the acquisition'
+                + ' frequency. Returning original data.',
+                UserWarning
+            )
+            return contact
+        else:
+            return contact.resample(freq, origin='start').sum()
 
     def read_sleep_diary(
             self,
