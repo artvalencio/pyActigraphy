@@ -16,6 +16,7 @@
 # Dev branch marker is: 'X.Y.devN' where N is an integer.
 #
 from . import analysis
+from . import contact
 from . import filters
 from . import io
 from . import light
@@ -29,6 +30,7 @@ from . import viz
 
 __all__ = [
     "analysis",
+    "contact",
     "filters",
     "io",
     "light",
@@ -41,4 +43,4 @@ __all__ = [
     "viz"
 ]
 
-__version__ = '1.2.1'
+__version__ = '1.2.1.1'

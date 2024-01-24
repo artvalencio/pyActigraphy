@@ -4,6 +4,7 @@ import re
 
 from ..base import BaseRaw
 from pyActigraphy.light import LightRecording
+from pyActigraphy.contact import ContactRecording
 
 class RawATR(BaseRaw):
     r"""Raw object from .txt file recorded by ActTrust (Condor Instruments)
@@ -516,7 +517,7 @@ class RawLumus(BaseRaw):
                 data=index_light,
                 frequency=index_light.index.freq
             ) if index_light is not None else None,
-            contact=LightRecording(
+            contact=ContactRecording(
                 name=name,
                 uuid=uuid,
                 data=index_contact,
