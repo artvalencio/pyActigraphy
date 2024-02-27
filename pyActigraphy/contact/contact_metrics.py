@@ -1062,3 +1062,87 @@ class ContactMetricsMixin(object):
         )
 
         return filt
+
+    def get_off_wrist(self,threshold=0.8,window=60):
+        """get_off_wrist
+
+        Get the time intervals when the device was most likely off-wrist
+
+        Parameters
+        ----------
+        threshold: float
+            Sensitivity level (between 0 and 1).
+        window: int, float
+            Minimum time span expected for a capacitance reading
+            truly reflecting an off-wrist. E.g. 60, for 60 minutes
+            of high capacitance indicating an off-wrist.
+
+        Returns
+        -------
+        intersection: pd.DataFrame
+            Table informing the agreement between contact sensors
+            of the times when the device was off-wrist.
+
+        """
+        #sanity checks
+        if not isinstance(window,(int,float)):
+            raise ValueError('window must be a number')
+        if window<=0:
+            raise ValueError('window must be a positive number greater than zero')
+        if window>=len(self.data):
+            raise ValueError('window must be smaller than the length of the data')
+        try:
+            threshold=float(threshold)
+            if threshold>1 or threshold<0:
+                raise ValueError('Threshold must be between 0 and 1')
+        except:
+            raise ValueError('Threshold must be a number')
+        if len(self.get_channel_list())==0:
+            raise ValueError('No contact channels found')
+        #get all contact channel names
+        channels=self.get_channel_list()
+        #get the potential off-wrist intervals according to each contact channel
+        peak_vals=[]
+        for ch in channels:
+            #convert channel to 0 and 1 according to a threshold
+            contact_signal=self.get_channel(ch).copy()
+            thr=contact_signal.quantile(threshold)
+            contact_signal[pd.isna(contact_signal)]=max(contact_signal)+10
+            contact_signal[contact_signal<thr]=0
+            contact_signal[contact_signal>=thr]=1
+            #get the rolling mean of the signal. This will smooth the signal and make it easier to differenciate between brief peaks and off-wrist plateaus
+            contact_signal=contact_signal.rolling(window=window).mean()
+            #find the plateaus as the peaks of the rolling mean with a minimum width of 'window' minutes and a height necessarily of 1
+            peaks=signal.find_peaks(contact_signal,width=window,height=1)
+            #if no off-wrist intervals are found, interrupt the function and return None
+            if len(peaks[0])==0:
+                print('No off-wrist intervals found using contact sensor channel',ch)
+                return None
+            #create as a dataframe with the start and end of each plateau and append to peak_vals list
+            peak_vals.append(pd.DataFrame(( contact_signal.index[peaks[0]],
+                                            contact_signal.index[[int(i) for i in peaks[0]-peaks[1]['widths']]],
+                                            contact_signal.index[[int(i) for i in peaks[0]+peaks[1]['widths']]]),
+                                            index=('peaks','start','end')).T)
+        #if it has only one contact channel, that's the answer
+        if len(peak_vals)==1:
+            return peak_vals[0]
+        #if it has two or more contact channels, get the intersection of all plateaus across all channels
+        #such intersection mean that all channels agree that the device was off-wrist
+        else:
+            intersection=[]
+            #this function does the intersection of two dataframes
+            def intersec(intersection2,peak_val):
+                for i in intersection2.index:
+                    for j in peak_val.index:
+                        if (intersection2.loc[i,'start']<=peak_val.loc[j,'end'])&(intersection2.loc[i,'end']>=peak_val.loc[j,'start']):
+                            start_time=max(intersection2.loc[i,'start'],peak_val.loc[j,'start'])
+                            end_time=min(intersection2.loc[i,'end'],peak_val.loc[j,'end'])
+                            intersection.append({'start':start_time,'end':end_time})
+                return pd.DataFrame(intersection)
+            #initialize the intersection with the first two channels
+            intersection=intersec(peak_vals[0],peak_vals[1])
+            #iterate through the other channels
+            for i in range(2,len(peak_vals)):
+                intersection=intersec(intersection,peak_vals[i])
+        #return the intersection, i.e., the agreement between the contact channels that the device was off-wrist
+        return intersection

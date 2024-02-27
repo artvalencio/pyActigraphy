@@ -96,8 +96,16 @@ The pyActigraphy package is open-source and its source code is accessible `onlin
 An online documentation of the package is also available `here <https://ghammad.github.io/pyActigraphy/index.html>`_.
 It contains `notebooks <https://ghammad.github.io/pyActigraphy/tutorials.html>`_ illustrating various functionalities of the package. Specific tutorials for the processing and the analysis of light exposure data with pyLight are also available.
 
-Installation
-============
+Installation of this version
+============================
+
+This modified version should be installed by:
+
+pip install git+https://github.com/artvalencio/pyActigraphy
+
+
+Instalation of the original version (not recommended)
+=====================================================
 
 In a (bash) shell, simply type:
 
