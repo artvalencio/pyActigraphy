@@ -101,7 +101,7 @@ Installation of this version
 
 This modified version should be installed by:
 
-pip install git+https://github.com/artvalencio/pyActigraphy
+  pip install git+https://github.com/artvalencio/pyActigraphy
 
 
 Instalation of the original version (not recommended)
