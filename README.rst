@@ -101,10 +101,14 @@ Installation of this version
 
 This modified version should be installed by:
 
-  pip install git+https://github.com/artvalencio/pyActigraphy
+
+.. code-block:: shell
+
+  pip3 install git+https://github.com/artvalencio/pyActigraphy
 
 
-Instalation of the original version (not recommended)
+
+Installation of the original version (not recommended)
 =====================================================
 
 In a (bash) shell, simply type:
