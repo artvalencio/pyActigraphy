@@ -111,6 +111,10 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
     def raw_data(self):
         r"""Indexed data extracted from the raw file."""
         return self.__data
+    
+    @raw_data.setter
+    def data(self, value):
+        self.raw_data = value
 
     # TODO: @lru_cache(maxsize=6) ???
     @property
@@ -138,6 +142,10 @@ class BaseRaw(SleepBoutMixin, ScoringMixin, MetricsMixin, FiltersMixin):
         else:
             data = self.raw_data
         return data.loc[self.start_time:self.start_time+self.period]
+
+    @data.setter
+    def data(self, value):
+        self.__data = value
 
     @property
     def raw_light(self):
