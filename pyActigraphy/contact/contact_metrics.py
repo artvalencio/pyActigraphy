@@ -1177,144 +1177,135 @@ class ContactMetricsMixin(object):
             The actLumus object with off-wrist data replaced.
 
         """
-        with warnings.catch_warnings():
-            #ignore warnings
-            try:
-                warnings.simplefilter(action="ignore", category=pd.core.common.SettingWithCopyWarning)
-            except:
-                try:
-                    warnings.simplefilter(action="ignore", category=pd.errors.SettingWithCopyWarning)
-                except:
-                    pass
-            values=copy.deepcopy(raw)
-            #create a mask to replace the inactivity values
-            for i in times.index:
-                t1,t2=times.at[i,'start'],times.at[i,'end']
-                if t1 not in values.TAT.index:
-                    raise ValueError('The off-wrist interval start time t1',t1,'is not in the raw data')
-                if t2 not in values.TAT.index:
-                    raise ValueError('The off-wrist interval end time t2',t2,'is not in the raw data')
-                values.TAT.loc[t1:t2]=np.nan
-                values.TATn.loc[t1:t2]=np.nan
-                values.ZCM.loc[t1:t2]=np.nan
-                values.ZCMn.loc[t1:t2]=np.nan
-                values.PIM.loc[t1:t2]=np.nan
-                values.PIMn.loc[t1:t2]=np.nan
-                values.raw_data.loc[t1:t2]=np.nan
-                #values.data[t1:t2]=np.nan
-            if type(method)!=str:
-                raise ValueError('Method must be a string')
-            elif method.lower()=='nan':
-                return(values)
-            elif method.lower()=='median':
-                #select the part of the raw data corresponding to full-days
-                ini=values.TAT.index[0].day
-                end=values.TAT.index[-1].day
-                k=0
-                for i in values.TAT.index:
-                    if i.day!=ini:
-                        ini=k
-                        break
-                    k+=1
-                if k==len(values.TAT):
+        values=copy.deepcopy(raw)
+        #create a mask to replace the inactivity values
+        for i in times.index:
+            t1,t2=times.at[i,'start'],times.at[i,'end']
+            if t1 not in values.TAT.index:
+                raise ValueError('The off-wrist interval start time t1',t1,'is not in the raw data')
+            if t2 not in values.TAT.index:
+                raise ValueError('The off-wrist interval end time t2',t2,'is not in the raw data')
+            values.TAT.loc[t1:t2]=np.nan
+            values.TATn.loc[t1:t2]=np.nan
+            values.ZCM.loc[t1:t2]=np.nan
+            values.ZCMn.loc[t1:t2]=np.nan
+            values.PIM.loc[t1:t2]=np.nan
+            values.PIMn.loc[t1:t2]=np.nan
+            values.raw_data.loc[t1:t2]=np.nan
+            #values.data[t1:t2]=np.nan
+        if type(method)!=str:
+            raise ValueError('Method must be a string')
+        elif method.lower()=='nan':
+            return(values)
+        elif method.lower()=='median':
+            #select the part of the raw data corresponding to full-days
+            ini=values.TAT.index[0].day
+            end=values.TAT.index[-1].day
+            k=0
+            for i in values.TAT.index:
+                if i.day!=ini:
+                    ini=k
+                    break
+                k+=1
+            if k==len(values.TAT):
+                raise ValueError('The data must have more than two days to use this method')
+            k=len(values.TAT)
+            for i in values.TAT.index.to_list()[::-1]:
+                if i.day!=end:
+                    end=k-1
+                    break
+                k-=1
+                if k<=0:
                     raise ValueError('The data must have more than two days to use this method')
-                k=len(values.TAT)
-                for i in values.TAT.index.to_list()[::-1]:
-                    if i.day!=end:
-                        end=k-1
-                        break
-                    k-=1
-                    if k<=0:
-                        raise ValueError('The data must have more than two days to use this method')
-                if ini+1440>end:
+            if ini+1440>end:
+                raise ValueError('The data must have more than two days to use this method')
+            fulldayTAT=values.TAT[ini:end]
+            fulldayTATn=values.TATn[ini:end]
+            fulldayZCM=values.ZCM[ini:end]
+            fulldayZCMn=values.ZCMn[ini:end]
+            fulldayPIM=values.PIM[ini:end]
+            fulldayPIMn=values.PIMn[ini:end]
+            #create a dataframe with the median or mean values of the same hour on other days, based on the full-day selection
+            mean_med_values=pd.DataFrame({'TAT':fulldayTAT.groupby(fulldayTAT.index.hour*60+fulldayTAT.index.minute).median(),
+                                        'TATn':fulldayTATn.groupby(fulldayTATn.index.hour*60+fulldayTATn.index.minute).median(),
+                                        'ZCM':fulldayZCM.groupby(fulldayZCM.index.hour*60+fulldayZCM.index.minute).median(),
+                                        'ZCMn':fulldayZCMn.groupby(fulldayZCMn.index.hour*60+fulldayZCMn.index.minute).median(),
+                                        'PIM':fulldayPIM.groupby(fulldayPIM.index.hour*60+fulldayPIM.index.minute).median(),
+                                        'PIMn':fulldayPIMn.groupby(fulldayPIMn.index.hour*60+fulldayPIMn.index.minute).median()})
+        elif method.lower()=='mean':
+            #select the part of the raw data corresponding to full-days
+            ini=values.TAT.index[0].day
+            end=values.TAT.index[-1].day
+            k=0
+            for i in values.TAT.index:
+                if i.day!=ini:
+                    ini=k
+                    break
+                k+=1
+            if k==len(values.TAT):
+                raise ValueError('The data must have more than two days to use this method')
+            k=len(values.TAT)
+            for i in values.TAT.index.to_list()[::-1]:
+                if i.day!=end:
+                    end=k-1
+                    break
+                k-=1
+                if k<=0:
                     raise ValueError('The data must have more than two days to use this method')
-                fulldayTAT=values.TAT[ini:end]
-                fulldayTATn=values.TATn[ini:end]
-                fulldayZCM=values.ZCM[ini:end]
-                fulldayZCMn=values.ZCMn[ini:end]
-                fulldayPIM=values.PIM[ini:end]
-                fulldayPIMn=values.PIMn[ini:end]
-                #create a dataframe with the median or mean values of the same hour on other days, based on the full-day selection
-                mean_med_values=pd.DataFrame({'TAT':fulldayTAT.groupby(fulldayTAT.index.hour*60+fulldayTAT.index.minute).median(),
-                                            'TATn':fulldayTATn.groupby(fulldayTATn.index.hour*60+fulldayTATn.index.minute).median(),
-                                            'ZCM':fulldayZCM.groupby(fulldayZCM.index.hour*60+fulldayZCM.index.minute).median(),
-                                            'ZCMn':fulldayZCMn.groupby(fulldayZCMn.index.hour*60+fulldayZCMn.index.minute).median(),
-                                            'PIM':fulldayPIM.groupby(fulldayPIM.index.hour*60+fulldayPIM.index.minute).median(),
-                                            'PIMn':fulldayPIMn.groupby(fulldayPIMn.index.hour*60+fulldayPIMn.index.minute).median()})
-            elif method.lower()=='mean':
-                #select the part of the raw data corresponding to full-days
-                ini=values.TAT.index[0].day
-                end=values.TAT.index[-1].day
-                k=0
-                for i in values.TAT.index:
-                    if i.day!=ini:
-                        ini=k
-                        break
-                    k+=1
-                if k==len(values.TAT):
-                    raise ValueError('The data must have more than two days to use this method')
-                k=len(values.TAT)
-                for i in values.TAT.index.to_list()[::-1]:
-                    if i.day!=end:
-                        end=k-1
-                        break
-                    k-=1
-                    if k<=0:
-                        raise ValueError('The data must have more than two days to use this method')
-                if ini+1440>end:
-                    raise ValueError('The data must have more than two days to use this method')
-                fulldayTAT=values.TAT[ini:end]
-                fulldayTATn=values.TATn[ini:end]
-                fulldayZCM=values.ZCM[ini:end]
-                fulldayZCMn=values.ZCMn[ini:end]
-                fulldayPIM=values.PIM[ini:end]
-                fulldayPIMn=values.PIMn[ini:end]
-                #create a dataframe with the median or mean values of the same hour on other days, based on the full-day selection
-                mean_med_values=pd.DataFrame({'TAT':fulldayTAT.groupby(fulldayTAT.index.hour*60+fulldayTAT.index.minute).mean(),
-                                            'TATn':fulldayTATn.groupby(fulldayTATn.index.hour*60+fulldayTATn.index.minute).mean(),
-                                            'ZCM':fulldayZCM.groupby(fulldayZCM.index.hour*60+fulldayZCM.index.minute).mean(),
-                                            'ZCMn':fulldayZCMn.groupby(fulldayZCMn.index.hour*60+fulldayZCMn.index.minute).mean(),
-                                            'PIM':fulldayPIM.groupby(fulldayPIM.index.hour*60+fulldayPIM.index.minute).mean(),
-                                            'PIMn':fulldayPIMn.groupby(fulldayPIMn.index.hour*60+fulldayPIMn.index.minute).mean()})
-            elif method.lower()=='zero' or str(method).lower()=='0' or method.lower()=='zeros' or method.lower=='zeroes':
-                values.TAT.loc[values.TAT.isna()]=0
-                values.TATn.loc[values.TATn.isna()]=0
-                values.ZCM.loc[values.ZCM.isna()]=0
-                values.ZCMn.loc[values.ZCMn.isna()]=0
-                values.PIM.loc[values.PIM.isna()]=0
-                values.PIMn.loc[values.PIMn.isna()]=0
-                values.raw_data.loc[values.raw_data.isna()]=0
-                return(values)
-            else:
-                raise ValueError('Method must be "median", "mean", "nan" or "zero"')
-            # for each period of inactivity replace with the median value:
-            for i in times.index:
-                t1,t2=times.at[i,'start'],times.at[i,'end']
-                #create a dataframe with the values to be replaced
-                to_replace=pd.DataFrame({'data':raw.data[t1:t2],
-                                        'TAT':raw.TAT[t1:t2],
-                                        'TATn':raw.TATn[t1:t2],
-                                        'ZCM':raw.ZCM[t1:t2],
-                                        'ZCMn':raw.ZCMn[t1:t2],
-                                        'PIM':raw.PIM[t1:t2],
-                                        'PIMn':raw.PIMn[t1:t2]})
-                #replace the values
-                if (t2.hour*60+t2.minute+1>t1.hour*60+t1.minute) and ((t2-t1).days==0): #if the period is in the same day, do a simple substitution, fast    
-                    values.TAT.loc[t1:t2]=mean_med_values['TAT'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.TATn.loc[t1:t2]=mean_med_values['TATn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.ZCM.loc[t1:t2]=mean_med_values['ZCM'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.ZCMn.loc[t1:t2]=mean_med_values['ZCMn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.PIM.loc[t1:t2]=mean_med_values['PIM'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.PIMn.loc[t1:t2]=mean_med_values['PIMn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                    values.raw_data.loc[t1:t2]=mean_med_values[raw.data.name][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
-                else: #if the period is in different days, the substitution is a little more complicated, have to run a loop, slow
-                    for t in pd.date_range(t1,t2,freq='60s'):
-                        values.TAT.loc[t]=mean_med_values['TAT'][t.hour*60+t.minute]
-                        values.TATn.loc[t]=mean_med_values['TATn'][t.hour*60+t.minute]
-                        values.ZCM.loc[t]=mean_med_values['ZCM'][t.hour*60+t.minute]
-                        values.ZCMn.loc[t]=mean_med_values['ZCMn'][t.hour*60+t.minute]
-                        values.PIM.loc[t]=mean_med_values['PIM'][t.hour*60+t.minute]
-                        values.PIMn.loc[t]=mean_med_values['PIMn'][t.hour*60+t.minute]
-                        values.raw_data.loc[t]=mean_med_values[raw.data.name][t.hour*60+t.minute]
-            return values
+            if ini+1440>end:
+                raise ValueError('The data must have more than two days to use this method')
+            fulldayTAT=values.TAT[ini:end]
+            fulldayTATn=values.TATn[ini:end]
+            fulldayZCM=values.ZCM[ini:end]
+            fulldayZCMn=values.ZCMn[ini:end]
+            fulldayPIM=values.PIM[ini:end]
+            fulldayPIMn=values.PIMn[ini:end]
+            #create a dataframe with the median or mean values of the same hour on other days, based on the full-day selection
+            mean_med_values=pd.DataFrame({'TAT':fulldayTAT.groupby(fulldayTAT.index.hour*60+fulldayTAT.index.minute).mean(),
+                                        'TATn':fulldayTATn.groupby(fulldayTATn.index.hour*60+fulldayTATn.index.minute).mean(),
+                                        'ZCM':fulldayZCM.groupby(fulldayZCM.index.hour*60+fulldayZCM.index.minute).mean(),
+                                        'ZCMn':fulldayZCMn.groupby(fulldayZCMn.index.hour*60+fulldayZCMn.index.minute).mean(),
+                                        'PIM':fulldayPIM.groupby(fulldayPIM.index.hour*60+fulldayPIM.index.minute).mean(),
+                                        'PIMn':fulldayPIMn.groupby(fulldayPIMn.index.hour*60+fulldayPIMn.index.minute).mean()})
+        elif method.lower()=='zero' or str(method).lower()=='0' or method.lower()=='zeros' or method.lower=='zeroes':
+            values.TAT.loc[values.TAT.isna()]=0
+            values.TATn.loc[values.TATn.isna()]=0
+            values.ZCM.loc[values.ZCM.isna()]=0
+            values.ZCMn.loc[values.ZCMn.isna()]=0
+            values.PIM.loc[values.PIM.isna()]=0
+            values.PIMn.loc[values.PIMn.isna()]=0
+            values.raw_data.loc[values.raw_data.isna()]=0
+            return(values)
+        else:
+            raise ValueError('Method must be "median", "mean", "nan" or "zero"')
+        # for each period of inactivity replace with the median value:
+        for i in times.index:
+            t1,t2=times.at[i,'start'],times.at[i,'end']
+            #create a dataframe with the values to be replaced
+            to_replace=pd.DataFrame({'data':raw.data[t1:t2],
+                                    'TAT':raw.TAT[t1:t2],
+                                    'TATn':raw.TATn[t1:t2],
+                                    'ZCM':raw.ZCM[t1:t2],
+                                    'ZCMn':raw.ZCMn[t1:t2],
+                                    'PIM':raw.PIM[t1:t2],
+                                    'PIMn':raw.PIMn[t1:t2]})
+            #replace the values
+            if (t2.hour*60+t2.minute+1>t1.hour*60+t1.minute) and ((t2-t1).days==0): #if the period is in the same day, do a simple substitution, fast    
+                values.TAT.loc[t1:t2]=mean_med_values['TAT'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.TATn.loc[t1:t2]=mean_med_values['TATn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.ZCM.loc[t1:t2]=mean_med_values['ZCM'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.ZCMn.loc[t1:t2]=mean_med_values['ZCMn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.PIM.loc[t1:t2]=mean_med_values['PIM'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.PIMn.loc[t1:t2]=mean_med_values['PIMn'][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+                values.raw_data.loc[t1:t2]=mean_med_values[raw.data.name][t1.hour*60+t1.minute:t2.hour*60+t2.minute+1].to_list()
+            else: #if the period is in different days, the substitution is a little more complicated, have to run a loop, slow
+                for t in pd.date_range(t1,t2,freq='60s'):
+                    values.TAT.loc[t]=mean_med_values['TAT'][t.hour*60+t.minute]
+                    values.TATn.loc[t]=mean_med_values['TATn'][t.hour*60+t.minute]
+                    values.ZCM.loc[t]=mean_med_values['ZCM'][t.hour*60+t.minute]
+                    values.ZCMn.loc[t]=mean_med_values['ZCMn'][t.hour*60+t.minute]
+                    values.PIM.loc[t]=mean_med_values['PIM'][t.hour*60+t.minute]
+                    values.PIMn.loc[t]=mean_med_values['PIMn'][t.hour*60+t.minute]
+                    values.raw_data.loc[t]=mean_med_values[raw.data.name][t.hour*60+t.minute]
+        return values
 
