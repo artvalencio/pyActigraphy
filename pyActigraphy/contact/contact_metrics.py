@@ -1178,7 +1178,14 @@ class ContactMetricsMixin(object):
 
         """
         with warnings.catch_warnings():
-            warnings.simplefilter(action="ignore", category=pd.core.common.SettingWithCopyWarning)
+            #ignore warnings
+            try:
+                warnings.simplefilter(action="ignore", category=pd.core.common.SettingWithCopyWarning)
+            except:
+                try:
+                    warnings.simplefilter(action="ignore", category=pd.errors.SettingWithCopyWarning)
+                except:
+                    pass
             values=copy.deepcopy(raw)
             #create a mask to replace the inactivity values
             for i in times.index:
