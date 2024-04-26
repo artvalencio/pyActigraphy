@@ -77,11 +77,11 @@ def _intradaily_variability(data):
     return (c_1h / d_1h)
 
 
-def _lmx(data, period, lowest=True):
+def _lmx(data, period, lowest=True, cyclic=True):
     """Calculate the start time and mean activity of the period of
     lowest/highest activity"""
 
-    avgdaily = _average_daily_activity(data=data, cyclic=True)
+    avgdaily = _average_daily_activity(data=data, cyclic=cyclic)
 
     n_epochs = int(pd.Timedelta(period)/avgdaily.index.freq)
 
