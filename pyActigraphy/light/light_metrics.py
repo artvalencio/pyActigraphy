@@ -938,7 +938,7 @@ class LightMetricsMixin(object):
 
         return data_smooth
 
-    def LRI(self, threshold, get_profile=False):
+    def LRI(self, threshold, channel, get_profile=False):
         r"""Light Regularity Index 
 
         Calculates the Light Regularity Index (LRI)
@@ -947,6 +947,9 @@ class LightMetricsMixin(object):
         ----------
         threshold: int.
             The threshold of light to be considered.
+
+        channel: str.
+            Which light channel to use.
 
         get_profile: bool, optional.
             Argument to inform whether the user desires to obtain
@@ -991,7 +994,7 @@ class LightMetricsMixin(object):
 
         # Work on a data copy for safety and
         # map to 0 and 1 according to threshold 
-        light_data = self.data.LIGHT.copy()
+        light_data = self.data[channel].copy()
         light_data = light_data.map(lambda x: 1.0 if x > threshold else 0.0)
         
         # Compute daily profile of light regularity indices
